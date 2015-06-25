@@ -48,17 +48,12 @@ class TestManager:
             print>>sys.stderr, "Can't find test named '%s'" % testName
             print>>sys.stderr, " Defined Tests = %s " % str( TestManager.DefinedTests.items() )
             return -1
-        baseline_file_path = os.path.join(TestingDir,".baseline_path")
         if baselinedir is not None:
-            text_file = open(baseline_file_path, "w")
-            text_file.write( baselinedir )
-            text_file.close()
-        else:
-            text_file = open(baseline_file_path, "r")
-            baselinedir = text_file.read()
-            text_file.close()
-        test.test_dir = baselinedir
-        test.image_name = os.path.join( test.test_dir, 'images', '.'.join( [ test.name, 'png' ] )  )
+            test.test_dir = baselinedir
+            test.image_name = os.path.join( test.test_dir, 'images',\
+                '.'.join( [ test.name, 'png' ] )  )
+        print "Running test %s, interactive= %s, baselinedir= %s" % ( testName,\
+                str(interactive), str(baselinedir) )
         test.test( ast.literal_eval(interactive) )
 
 
@@ -85,7 +80,7 @@ class vcsTest:
         self.image_name = os.path.join( self.test_dir, 'images', '.'.join( [ self.name, 'png' ] )  )
         filename = args.get( 'file', DefaultSampleFile )
         self.varnames = args.get( 'vars', [ DefaultSampleVar ] )
-        self.file_path = os.path.join( vcs.prefix, "sample_data", filename )
+        self.file_path = os.path.join( vcs.sample_data, filename )
         self.file = cdms2.open( self.file_path )
         self.roi =  args.get( 'roi', None )
         self.ptype = args.get( 'type', '3d_scalar' )
@@ -131,15 +126,11 @@ class vcsTest:
         self.build()
 #        test_image = os.path.join( self.test_dir, 'images', '.'.join( [ self.name, 'png' ] ) )
         test_image = '.'.join( [ self.name, 'test', 'png' ] )
-        ref_image  = '.'.join( [ self.name, 'png' ] )
         self.canvas.png( test_image )
-        try:
-            print "Copying ref image %s to %s in %s " % ( self.image_name, ref_image, os.path.abspath('.') )
-            shutil.copy( self.image_name, ref_image )
-            ret = checkimage.check_result_image( test_image, ref_image, checkimage.defaultThreshold+3. )
-        except IOError:
-            print "No ref image '%s' found." % ref_image
-            ret = 0
+
+        ret = checkimage.check_result_image( test_image, self.image_name,\
+                checkimage.defaultThreshold+3. )
+
         if  interactive:
             print "Type <Enter> to continue and update ref image ( type 'n' to skip update )."
             sys.stdout.flush()

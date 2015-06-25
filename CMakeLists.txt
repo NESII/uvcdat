@@ -120,17 +120,17 @@ if(APPLE)
     set(HAVE_10_10_SDK TRUE)
   endif()
   # Try for the lowest version SDK we can
-  if ((${OSX_VER_MAJOR} VERSION_EQUAL 8) AND (HAVE_10_8_SDK))
+  if ((${OSX_VER_MINOR} VERSION_EQUAL 8) AND (HAVE_10_8_SDK))
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -headerpad_max_install_names")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.8 CACHE STRING "" FORCE)
     set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk" CACHE PATH "" FORCE)
-  elseif((${OS_X_VER_MAJOR} VERSION_EQUAL 9) AND (HAVE_10_9_SDK))
+  elseif((${OSX_VER_MINOR} VERSION_EQUAL 9) AND (HAVE_10_9_SDK))
     set(CMAKE_C_COMPILER clang)
     set(CMAKE_CXX_COMPILER clang++)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -headerpad_max_install_names")
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.9 CACHE STRING "" FORCE)
     set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk" CACHE PATH "" FORCE)
-  elseif((${OSX_VER_MAJOR} VERSION_EQUAL 10) AND (HAVE_10_10_SDK))
+  elseif((${OSX_VER_MINOR} VERSION_EQUAL 10) AND (HAVE_10_10_SDK))
     set(CMAKE_C_COMPILER clang)
     set(CMAKE_CXX_COMPILER clang++)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -headerpad_max_install_names")
@@ -232,6 +232,7 @@ if(BUILD_TESTING)
       "-DGIT_EXECUTABLE=${GIT_EXECUTABLE}"
       "-DTESTDATA_URL=${REPO_URL}"
       "-DTESTDATA_DIR=${UVCDAT_GIT_TESTDATA_DIR}"
+      "-DSOURCE_DIR=${cdat_SOURCE_DIR}"
       -P "${cdat_CMAKE_SOURCE_DIR}/cdat_modules_extra/checkout_testdata.cmake"
     COMMENT "Updating uvcdat-testdata repo."
   )
@@ -295,6 +296,7 @@ if (CDAT_BUILD_ESGF)
 endif()
 set(CDAT_BUILD_MODE "DEFAULT" CACHE STRING "Build mode for CDAT <ALL, LEAN, DEFAULT>")
 set_property(CACHE CDAT_BUILD_MODE PROPERTY STRINGS "DEFAULT" "ALL" "LEAN")
+message([INFO] BUILD MODE} ${CDAT_BUILD_MODE})
 
 # Set the state of LEAN all based on the MODE
 if (CDAT_BUILD_MODE STREQUAL "LEAN")
@@ -303,9 +305,11 @@ if (CDAT_BUILD_MODE STREQUAL "LEAN")
 elseif (CDAT_BUILD_MODE STREQUAL "ALL")
   set(CDAT_BUILD_LEAN OFF)
   set(CDAT_BUILD_ALL ON)
-else()
+elseif (CDAT_BUILD_MODE STREQUAL "DEFAULT")
   set(CDAT_BUILD_LEAN OFF)
   set(CDAT_BUILD_ALL OFF)
+else()
+  message(FATAL_ERROR "[ERROR] Unknown CDAT_BUILD_MODE \"${CDAT_BUILD_MODE}\" VALID MODES ARE \"DEFAULT\" \"ALL\" \"LEAN\"")
 endif()
 
 # First of all if LEAN then turn OFF GRAPHICS and PARALLEL
@@ -466,6 +470,7 @@ include(cython_pkg)
 include(data_pkg)
 include(esmf_pkg)
 include(ffmpeg_pkg)
+include(flake8_pkg)
 include(g2clib_pkg)
 include(gdal_pkg)
 include(geos_pkg)
@@ -484,11 +489,14 @@ include(libcf_pkg)
 include(libdrs_pkg)
 include(matplotlib_pkg)
 include(six_pkg)
+include(cryptography_pkg)
+include(cffi_pkg)
+include(ffi_pkg)
 include(dateutils_pkg)
 include(pyparsing_pkg)
+include(pycparser_pkg)
 include(md5_pkg)
 include(mpi4py_pkg)
-include(pep8_pkg)
 include(pyopenssl_pkg)
 include(setuptools_pkg)
 include(myproxyclient_pkg)
@@ -541,12 +549,12 @@ include(uuid_pkg)
 # IF we build the UVCDAT Metrics package
 if (CDAT_BUILD_UVCMETRICSPKG)
   if (CDAT_DOWNLOAD_UVCMETRICS_TESTDATA)
-    set(UVCMETRICS_TEST_DATA_DIRECTORY $ENV{HOME}/uvcmetrics_test_data CACHE PATH "DIR FOR UVCMETRICS TEST DATA" )
+    set(UVCMETRICS_TEST_DATA_DIRECTORY ${CMAKE_INSTALL_PREFIX}/share/uvcmetrics/test_data CACHE PATH "DIR FOR UVCMETRICS TEST DATA" )
   endif()
   include(uvcmetrics_pkg)
 endif()
 include(vistrails_pkg)
-include(yasm_pkg)
+#include(yasm_pkg)
 include(pylibxml2_pkg)
 include(cdatlogger_pkg)
 include(pyclimate_pkg)
@@ -600,8 +608,8 @@ configure_file(${cdat_CMAKE_SOURCE_DIR}/cdat_modules_extra/cleanenv_configure_st
     @ONLY
 )
 
-configure_file(${cdat_CMAKE_SOURCE_DIR}/cdat_modules_extra/cdat_configure_step.cmake.in
-    ${cdat_CMAKE_BINARY_DIR}/cdat_configure_step.cmake
+configure_file(${cdat_CMAKE_SOURCE_DIR}/cdat_modules_extra/cdatmpi_configure_step.cmake.in
+    ${cdat_CMAKE_BINARY_DIR}/cdatmpi_configure_step.cmake
     @ONLY
 )
 
@@ -674,6 +682,7 @@ set(SETUP_LIBRARY_PATHS
   "Externals/lib/paraview-${PARAVIEW_MAJOR}.${PARAVIEW_MINOR} "
   "Externals/lib/R/lib "
   "Externals/lib "
+  "Externals/lib64 "
   "lib "
 )
 string(REPLACE ";" " " SETUP_LIBRARY_PATHS ${SETUP_LIBRARY_PATHS})
