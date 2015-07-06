@@ -146,7 +146,7 @@ endif()
 
 # 5) Update the remote branches available on the testdata repo.
 execute_process(COMMAND
-  "${GIT_EXECUTABLE}" fetch --update-shallow --depth=1
+  "${GIT_EXECUTABLE}" fetch --depth=1  
   WORKING_DIRECTORY "${TESTDATA_DIR}"
   RESULT_VARIABLE RESULT
   ERROR_VARIABLE OUTPUT
@@ -154,7 +154,7 @@ execute_process(COMMAND
 
 if(NOT RESULT EQUAL 0)
   message("Cannot update uvcdat-testdata checkout at \"${TESTDATA_DIR}\". "
-          "Error updating remote branches with 'git fetch --update-shallow --depth=1':\n."
+          "Error updating remote branches with 'git fetch  --depth=1':\n."
           "${OUTPUT}\n"
           "Baseline images may be out of date.")
   return()
@@ -171,7 +171,7 @@ execute_process(COMMAND
 
 if(NOT RESULT EQUAL 0)
   message("Cannot update uvcdat-testdata checkout at \"${TESTDATA_DIR}\". "
-          "Error updating remote branches with 'git fetch --update-shallow --depth=1':\n."
+          "Error updating remote branches with 'git fetch --depth=1':\n."
           "${OUTPUT}\n"
           "Baseline images may be out of date.")
   return()
